@@ -2,16 +2,23 @@ const SIZE_MAP = { X: 40, Y: 24 };
 
 interface IMap {
     id: number;
-    value: 0 | 1 | 2;
+    type: "free" | "wall" | "hero";
+}
+
+interface IHero {
+    x: number;
+    y: number;
 }
 
 class Game {
     public sizeMap;
     public map: Array<Array<IMap>>;
+    public hero: IHero;
 
     constructor(sizeMap: { X: number; Y: number }) {
         this.sizeMap = sizeMap;
         this.map = [];
+        this.hero = { x: 0, y: 0 };
     }
 
     // ● Сгенерировать карту 40x24 и ● Залить всю карту стеной
@@ -50,7 +57,7 @@ class Game {
 
             newDiv.appendChild(newImg);
             field.appendChild(newDiv);
-            initMap.push({ id: i, value: 1 });
+            initMap.push({ id: i, type: "wall" });
         }
 
         // Создание двухмерного массива 40 на 24
@@ -60,7 +67,7 @@ class Game {
             let row = initMap.slice(i, i + this.sizeMap.X);
             twoDimArray.push(row);
         }
-        this.map = twoDimArray
+        this.map = twoDimArray;
     }
 
     // ● Разместить случайное количество (5 - 10) прямоугольных “комнат” со случайными размерами (3 - 8 клеток в длину и ширину)
@@ -73,20 +80,31 @@ class Game {
             const sizeRoomBefore = 8;
             const sizeRoomFrom = 3;
 
-            const randomRoomSizeX = Math.floor(Math.random() * (sizeRoomBefore - sizeRoomFrom + 1)) + sizeRoomFrom;
-            const randomRoomSizeY = Math.floor(Math.random() * (sizeRoomBefore - sizeRoomFrom + 1)) + sizeRoomFrom;
+            const randomRoomSizeX =
+                Math.floor(
+                    Math.random() * (sizeRoomBefore - sizeRoomFrom + 1)
+                ) + sizeRoomFrom;
+            const randomRoomSizeY =
+                Math.floor(
+                    Math.random() * (sizeRoomBefore - sizeRoomFrom + 1)
+                ) + sizeRoomFrom;
 
             // Рандомно определяем начальные координаты
-            const randomIdMapX = Math.floor(Math.random() * (SIZE_MAP.X-randomRoomSizeX));
-            const randomIdMapY = Math.floor(Math.random() * (SIZE_MAP.Y-randomRoomSizeY));
+            const randomIdMapX = Math.floor(
+                Math.random() * (SIZE_MAP.X - randomRoomSizeX)
+            );
+            const randomIdMapY = Math.floor(
+                Math.random() * (SIZE_MAP.Y - randomRoomSizeY)
+            );
 
             // Задаем от начальной точки длину и ширину от 3 до 8
             for (let index = 0; index < randomRoomSizeY; index++) {
                 for (let i = 0; i < randomRoomSizeX; i++) {
-                    this.map[randomIdMapY+index][randomIdMapX+i].value = 0
+                    this.map[randomIdMapY + index][randomIdMapX + i].type =
+                        "free";
                 }
             }
-            this.renderMap()
+            this.renderMap();
         }
     }
 
@@ -97,33 +115,41 @@ class Game {
 
         // Чертим линии по оси Y
         for (let i = 0; i < countLineX; i++) {
-            const coordinateStartLineX = Math.floor(Math.random() * this.sizeMap.X); // 0 - 40
-            console.log('coordinateStartLineX', coordinateStartLineX)
+            const coordinateStartLineX = Math.floor(
+                Math.random() * this.sizeMap.X
+            ); // 0 - 40
+            console.log("coordinateStartLineX", coordinateStartLineX);
 
-            for (let index = 0; index < this.sizeMap.Y; index++) { // 0 - 24
-                this.map[index][coordinateStartLineX].value = 0;
+            for (let index = 0; index < this.sizeMap.Y; index++) {
+                // 0 - 24
+                this.map[index][coordinateStartLineX].type = "free";
             }
         }
         // Чертим линии по оси X
         for (let i = 0; i < countLineY; i++) {
-            const coordinateStartLineY = Math.floor(Math.random() * this.sizeMap.Y); // 0 - 24
-            console.log('coordinateStartLineY', coordinateStartLineY)
+            const coordinateStartLineY = Math.floor(
+                Math.random() * this.sizeMap.Y
+            ); // 0 - 24
+            console.log("coordinateStartLineY", coordinateStartLineY);
 
-            for (let index = 0; index < this.sizeMap.X; index++) { // 0 - 40
-                this.map[coordinateStartLineY][index].value = 0;
+            for (let index = 0; index < this.sizeMap.X; index++) {
+                // 0 - 40
+                this.map[coordinateStartLineY][index].type = "free";
             }
         }
 
         this.renderMap();
     }
 
-    spavnHero() {
-        for (const coordY of this.map) {
-            for (const item of coordY) {
-                if (item.value === 0){
-                    const img: any = document.getElementById(`${item.id}`)
-                    item.value = 2
-                    return img.src = 'images/tile-P.png'
+    spawnHero() {
+        for (let index = 0; index < this.sizeMap.Y; index++) {
+            for (let i = 0; i < this.sizeMap.X; i++) {
+                const block = this.map[i][index];
+                if (block.type === "free") {
+                    this.hero = { x: i, y: index };
+                    const img: any = document.getElementById(`${block.id}`);
+                    block.type = "hero";
+                    return (img.src = "images/tile-P.png");
                 }
             }
         }
@@ -131,29 +157,65 @@ class Game {
 
     pressButton() {
         addEventListener("keydown", (event) => {
-            const isArrow = event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "ArrowUp" || event.key === "ArrowDown"
-            if (isArrow) press(event.key)
+            const isArrow =
+                event.key === "ArrowLeft" ||
+                event.key === "ArrowRight" ||
+                event.key === "ArrowUp" ||
+                event.key === "ArrowDown";
+            if (isArrow) press(event.key);
         });
 
-        const press = (key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown") => {
-            console.log(key)
-        }
+        const press = (
+            key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown"
+        ) => {
+            this.map[this.hero.x][this.hero.y].type = "free";
+
+            if (key === "ArrowLeft") {
+                if (this.map[this.hero.x][this.hero.y - 1].type === "wall") return;
+                this.hero.y = this.hero.y - 1;
+            }
+            if (key === "ArrowRight") {
+                if (this.map[this.hero.x][this.hero.y + 1].type === "wall") return;
+                this.hero.y = this.hero.y + 1;
+            }
+            if (key === "ArrowUp") {
+                if (this.map[this.hero.x - 1][this.hero.y].type === "wall") return;
+                this.hero.x = this.hero.x - 1;
+            }
+            if (key === "ArrowDown") {
+                if (this.map[this.hero.x + 1][this.hero.y].type === "wall") return;
+                this.hero.x = this.hero.x + 1;
+            }
+
+            this.map[this.hero.x][this.hero.y].type = "hero";
+            this.renderMap();
+        };
     }
 
     renderMap() {
-        // Если value элемента поменялось, мы делаем перерендер
+        // Если type элемента поменялось, мы делаем перерендер
         this.map.forEach((element) => {
             element.forEach((item: IMap) => {
-                if (item.value === 0){
-                    const img: any = document.getElementById(`${item.id}`)
-                    img.src = 'images/tile-.png'
-                } else {
-                    const img: any = document.getElementById(`${item.id}`)
-                    img.src = 'images/tile-W.png'
-                }
+                const img: any = document.getElementById(`${item.id}`);
 
-            })
-        })
+                switch (item.type) {
+                    case "free":
+                        img.src = "images/tile-.png";
+                        break;
+
+                    case "wall":
+                        img.src = "images/tile-W.png";
+                        break;
+
+                    case "hero":
+                        img.src = "images/tile-P.png";
+                        break;
+
+                    default:
+                        break;
+                }
+            });
+        });
     }
 }
 
@@ -161,5 +223,5 @@ const game = new Game(SIZE_MAP);
 game.init();
 game.generateRandomVerticalHorizontalLine();
 game.generateRandomRoom();
-game.pressButton()
-game.spavnHero()
+game.pressButton();
+game.spawnHero();

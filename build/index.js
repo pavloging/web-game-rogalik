@@ -4,6 +4,7 @@ class Game {
     constructor(sizeMap) {
         this.sizeMap = sizeMap;
         this.map = [];
+        this.hero = { x: 0, y: 0 };
     }
     // ● Сгенерировать карту 40x24 и ● Залить всю карту стеной
     init() {
@@ -37,7 +38,7 @@ class Game {
             newImg.style.height = `${sizeWallY}px`;
             newDiv.appendChild(newImg);
             field.appendChild(newDiv);
-            initMap.push({ id: i, value: 1 });
+            initMap.push({ id: i, type: "wall" });
         }
         // Создание двухмерного массива 40 на 24
         const twoDimArray = [];
@@ -63,7 +64,8 @@ class Game {
             // Задаем от начальной точки длину и ширину от 3 до 8
             for (let index = 0; index < randomRoomSizeY; index++) {
                 for (let i = 0; i < randomRoomSizeX; i++) {
-                    this.map[randomIdMapY + index][randomIdMapX + i].value = 0;
+                    this.map[randomIdMapY + index][randomIdMapX + i].type =
+                        "free";
                 }
             }
             this.renderMap();
@@ -76,54 +78,88 @@ class Game {
         // Чертим линии по оси Y
         for (let i = 0; i < countLineX; i++) {
             const coordinateStartLineX = Math.floor(Math.random() * this.sizeMap.X); // 0 - 40
-            console.log('coordinateStartLineX', coordinateStartLineX);
-            for (let index = 0; index < this.sizeMap.Y; index++) { // 0 - 24
-                this.map[index][coordinateStartLineX].value = 0;
+            console.log("coordinateStartLineX", coordinateStartLineX);
+            for (let index = 0; index < this.sizeMap.Y; index++) {
+                // 0 - 24
+                this.map[index][coordinateStartLineX].type = "free";
             }
         }
         // Чертим линии по оси X
         for (let i = 0; i < countLineY; i++) {
             const coordinateStartLineY = Math.floor(Math.random() * this.sizeMap.Y); // 0 - 24
-            console.log('coordinateStartLineY', coordinateStartLineY);
-            for (let index = 0; index < this.sizeMap.X; index++) { // 0 - 40
-                this.map[coordinateStartLineY][index].value = 0;
+            console.log("coordinateStartLineY", coordinateStartLineY);
+            for (let index = 0; index < this.sizeMap.X; index++) {
+                // 0 - 40
+                this.map[coordinateStartLineY][index].type = "free";
             }
         }
         this.renderMap();
     }
-    spavnHero() {
-        for (const coordY of this.map) {
-            for (const item of coordY) {
-                if (item.value === 0) {
-                    const img = document.getElementById(`${item.id}`);
-                    item.value = 2;
-                    return img.src = 'images/tile-P.png';
+    spawnHero() {
+        for (let index = 0; index < this.sizeMap.Y; index++) {
+            for (let i = 0; i < this.sizeMap.X; i++) {
+                const block = this.map[i][index];
+                if (block.type === "free") {
+                    this.hero = { x: i, y: index };
+                    const img = document.getElementById(`${block.id}`);
+                    block.type = "hero";
+                    return (img.src = "images/tile-P.png");
                 }
             }
         }
     }
     pressButton() {
         addEventListener("keydown", (event) => {
-            const isArrow = event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "ArrowUp" || event.key === "ArrowDown";
+            const isArrow = event.key === "ArrowLeft" ||
+                event.key === "ArrowRight" ||
+                event.key === "ArrowUp" ||
+                event.key === "ArrowDown";
             if (isArrow)
                 press(event.key);
         });
         const press = (key) => {
-            console.log(key);
-            // Допилить ходьбу
+            this.map[this.hero.x][this.hero.y].type = "free";
+            if (key === "ArrowLeft") {
+                if (this.map[this.hero.x][this.hero.y - 1].type === "wall")
+                    return;
+                this.hero.y = this.hero.y - 1;
+            }
+            if (key === "ArrowRight") {
+                if (this.map[this.hero.x][this.hero.y + 1].type === "wall")
+                    return;
+                this.hero.y = this.hero.y + 1;
+            }
+            if (key === "ArrowUp") {
+                if (this.map[this.hero.x - 1][this.hero.y].type === "wall")
+                    return;
+                this.hero.x = this.hero.x - 1;
+            }
+            if (key === "ArrowDown") {
+                if (this.map[this.hero.x + 1][this.hero.y].type === "wall")
+                    return;
+                this.hero.x = this.hero.x + 1;
+            }
+            this.map[this.hero.x][this.hero.y].type = "hero";
+            this.renderMap();
         };
     }
     renderMap() {
-        // Если value элемента поменялось, мы делаем перерендер
+        // Если type элемента поменялось, мы делаем перерендер
         this.map.forEach((element) => {
             element.forEach((item) => {
-                if (item.value === 0) {
-                    const img = document.getElementById(`${item.id}`);
-                    img.src = 'images/tile-.png';
-                }
-                else {
-                    const img = document.getElementById(`${item.id}`);
-                    img.src = 'images/tile-W.png';
+                const img = document.getElementById(`${item.id}`);
+                switch (item.type) {
+                    case "free":
+                        img.src = "images/tile-.png";
+                        break;
+                    case "wall":
+                        img.src = "images/tile-W.png";
+                        break;
+                    case "hero":
+                        img.src = "images/tile-P.png";
+                        break;
+                    default:
+                        break;
                 }
             });
         });
@@ -134,4 +170,4 @@ game.init();
 game.generateRandomVerticalHorizontalLine();
 game.generateRandomRoom();
 game.pressButton();
-game.spavnHero();
+game.spawnHero();
