@@ -202,28 +202,34 @@ class Game {
         ) => {
             this.map[this.hero.x][this.hero.y].type = "free";
 
+            const forSounds = (type: TType) => {
+                if (type === 'sword') this.playSound('sounds/sword.mp3')
+                if (type === 'heal') this.playSound('sounds/heal.mp3')
+                if (type === "free") this.playSound('sounds/step.mp3')
+            }
+
             if (key === "ArrowLeft") {
                 const type = this.map[this.hero.x][this.hero.y - 1].type
                 if (type === "wall" || type === "NPC") return;
-                this.playSound('sounds/step.mp3')
+                forSounds(type)
                 this.hero.y = this.hero.y - 1;
             }
             if (key === "ArrowRight") {
                 const type = this.map[this.hero.x][this.hero.y + 1].type
                 if (type === "wall" || type === "NPC") return;
-                this.playSound('sounds/step.mp3')
+                forSounds(type)
                 this.hero.y = this.hero.y + 1;
             }
             if (key === "ArrowUp") {
                 const type = this.map[this.hero.x - 1][this.hero.y].type 
                 if (type === "wall" || type === "NPC") return;
-                this.playSound('sounds/step.mp3')
+                forSounds(type)
                 this.hero.x = this.hero.x - 1;
             }
             if (key === "ArrowDown") {
                 const type = this.map[this.hero.x + 1][this.hero.y].type
                 if (type === "wall" || type === "NPC") return;
-                this.playSound('sounds/step.mp3')
+                forSounds(type)
                 this.hero.x = this.hero.x + 1;
             }
 
