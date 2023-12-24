@@ -203,23 +203,23 @@ class Game {
             this.map[this.hero.x][this.hero.y].type = "free";
 
             if (key === "ArrowLeft") {
-                if (this.map[this.hero.x][this.hero.y - 1].type === "wall")
-                    return;
+                const type = this.map[this.hero.x][this.hero.y - 1].type
+                if (type === "wall" || type === "NPC") return;
                 this.hero.y = this.hero.y - 1;
             }
             if (key === "ArrowRight") {
-                if (this.map[this.hero.x][this.hero.y + 1].type === "wall")
-                    return;
+                const type = this.map[this.hero.x][this.hero.y + 1].type
+                if (type === "wall" || type === "NPC") return;
                 this.hero.y = this.hero.y + 1;
             }
             if (key === "ArrowUp") {
-                if (this.map[this.hero.x - 1][this.hero.y].type === "wall")
-                    return;
+                const type = this.map[this.hero.x - 1][this.hero.y].type 
+                if (type === "wall" || type === "NPC") return;
                 this.hero.x = this.hero.x - 1;
             }
             if (key === "ArrowDown") {
-                if (this.map[this.hero.x + 1][this.hero.y].type === "wall")
-                    return;
+                const type = this.map[this.hero.x + 1][this.hero.y].type
+                if (type === "wall" || type === "NPC") return;
                 this.hero.x = this.hero.x + 1;
             }
 

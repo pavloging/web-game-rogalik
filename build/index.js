@@ -107,10 +107,11 @@ class Game {
             }
         }
     }
+    // ●	Поместить 10 противников с случайные пустые места  ●	Разместить мечи (2 шт) и зелья здоровья (10 шт) в пустых местах
     spawnItems(type, count) {
         // Ищем пустые места
         const freeBlock = this.map.map((item) => item.filter((el) => el.type === "free"));
-        // Геренирем count NPC
+        // Геренирем количество элементов
         for (let index = 0; index < count; index++) {
             const spawnY = Math.floor(Math.random() * freeBlock.length);
             const spawnX = Math.floor(Math.random() * freeBlock[spawnY].length);
@@ -135,35 +136,6 @@ class Game {
         }
         this.renderMap();
     }
-    // // ●	Поместить 10 противников с случайные пустые места
-    // spawnNPС() {
-    //     // Ищем пустые места
-    //     const freeBlock = this.map.map((item) =>item.filter((el) => el.type === "free"));
-    //     // Геренирем 10 NPC
-    //     for (let index = 0; index < 10; index++) {
-    //         const spawnY = Math.floor(Math.random() * freeBlock.length);
-    //         const spawnX = Math.floor(Math.random() * freeBlock[spawnY].length);
-    //         // Берем наше поле
-    //         const fieldsFree = this.map.find((item) =>item.find((el) => freeBlock[spawnY][spawnX].id === el.id));
-    //         if (!fieldsFree) return;
-    //         const field = fieldsFree.find((item) => item.id === freeBlock[spawnY][spawnX].id);
-    //         if (!field) return;
-    //         // Добавляем поле в локацию
-    //         this.map = this.map.map((row) => {
-    //             return row.map((el) => {
-    //                 if (el.id === field.id) {
-    //                     return { id: field.id, type: "NPC" };
-    //                 } else {
-    //                     return el;
-    //                 }
-    //             });
-    //         });
-    //     }
-    //     this.renderMap();
-    // }
-    // // ●	Разместить мечи (2 шт) и зелья здоровья (10 шт) в пустых местах
-    // spawnSwordAndHeal() {
-    // }
     // ●	Сделать возможность передвижения героя клавишами WASD (влево-вверх-вниз-вправо)
     pressButton() {
         addEventListener("keydown", (event) => {
@@ -177,22 +149,26 @@ class Game {
         const press = (key) => {
             this.map[this.hero.x][this.hero.y].type = "free";
             if (key === "ArrowLeft") {
-                if (this.map[this.hero.x][this.hero.y - 1].type === "wall")
+                const type = this.map[this.hero.x][this.hero.y - 1].type;
+                if (type === "wall" || type === "NPC")
                     return;
                 this.hero.y = this.hero.y - 1;
             }
             if (key === "ArrowRight") {
-                if (this.map[this.hero.x][this.hero.y + 1].type === "wall")
+                const type = this.map[this.hero.x][this.hero.y + 1].type;
+                if (type === "wall" || type === "NPC")
                     return;
                 this.hero.y = this.hero.y + 1;
             }
             if (key === "ArrowUp") {
-                if (this.map[this.hero.x - 1][this.hero.y].type === "wall")
+                const type = this.map[this.hero.x - 1][this.hero.y].type;
+                if (type === "wall" || type === "NPC")
                     return;
                 this.hero.x = this.hero.x - 1;
             }
             if (key === "ArrowDown") {
-                if (this.map[this.hero.x + 1][this.hero.y].type === "wall")
+                const type = this.map[this.hero.x + 1][this.hero.y].type;
+                if (type === "wall" || type === "NPC")
                     return;
                 this.hero.x = this.hero.x + 1;
             }
