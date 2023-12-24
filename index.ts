@@ -205,27 +205,37 @@ class Game {
             if (key === "ArrowLeft") {
                 const type = this.map[this.hero.x][this.hero.y - 1].type
                 if (type === "wall" || type === "NPC") return;
+                this.playSound('sounds/step.mp3')
                 this.hero.y = this.hero.y - 1;
             }
             if (key === "ArrowRight") {
                 const type = this.map[this.hero.x][this.hero.y + 1].type
                 if (type === "wall" || type === "NPC") return;
+                this.playSound('sounds/step.mp3')
                 this.hero.y = this.hero.y + 1;
             }
             if (key === "ArrowUp") {
                 const type = this.map[this.hero.x - 1][this.hero.y].type 
                 if (type === "wall" || type === "NPC") return;
+                this.playSound('sounds/step.mp3')
                 this.hero.x = this.hero.x - 1;
             }
             if (key === "ArrowDown") {
                 const type = this.map[this.hero.x + 1][this.hero.y].type
                 if (type === "wall" || type === "NPC") return;
+                this.playSound('sounds/step.mp3')
                 this.hero.x = this.hero.x + 1;
             }
 
             this.map[this.hero.x][this.hero.y].type = "hero";
             this.renderMap();
         };
+    }
+
+    playSound(url: string) {
+        const audio = new Audio();
+        audio.src = url;
+        audio.play();
     }
 
     renderMap() {
