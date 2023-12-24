@@ -6,7 +6,7 @@ class Game {
         this.map = [];
         this.hero = { x: 0, y: 0 };
     }
-    // ● Сгенерировать карту 40x24 и ● Залить всю карту стеной
+    // ●    Сгенерировать карту 40x24 ● Залить всю карту стеной
     init() {
         // Получение элемента с классом field-box
         const field = document.querySelector(".field-box");
@@ -48,7 +48,7 @@ class Game {
         }
         this.map = twoDimArray;
     }
-    // ● Разместить случайное количество (5 - 10) прямоугольных “комнат” со случайными размерами (3 - 8 клеток в длину и ширину)
+    // ●    Разместить случайное количество (5 - 10) прямоугольных “комнат” со случайными размерами (3 - 8 клеток в длину и ширину)
     generateRandomRoom() {
         // Определяем количество комнат
         const randomCountRoom = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
@@ -78,7 +78,6 @@ class Game {
         // Чертим линии по оси Y
         for (let i = 0; i < countLineX; i++) {
             const coordinateStartLineX = Math.floor(Math.random() * this.sizeMap.X); // 0 - 40
-            console.log("coordinateStartLineX", coordinateStartLineX);
             for (let index = 0; index < this.sizeMap.Y; index++) {
                 // 0 - 24
                 this.map[index][coordinateStartLineX].type = "free";
@@ -87,7 +86,6 @@ class Game {
         // Чертим линии по оси X
         for (let i = 0; i < countLineY; i++) {
             const coordinateStartLineY = Math.floor(Math.random() * this.sizeMap.Y); // 0 - 24
-            console.log("coordinateStartLineY", coordinateStartLineY);
             for (let index = 0; index < this.sizeMap.X; index++) {
                 // 0 - 40
                 this.map[coordinateStartLineY][index].type = "free";
@@ -95,6 +93,7 @@ class Game {
         }
         this.renderMap();
     }
+    // ●	Поместить героя в случайное пустое место
     spawnHero() {
         for (let index = 0; index < this.sizeMap.Y; index++) {
             for (let i = 0; i < this.sizeMap.X; i++) {
@@ -108,6 +107,64 @@ class Game {
             }
         }
     }
+    spawnItems(type, count) {
+        // Ищем пустые места
+        const freeBlock = this.map.map((item) => item.filter((el) => el.type === "free"));
+        // Геренирем count NPC
+        for (let index = 0; index < count; index++) {
+            const spawnY = Math.floor(Math.random() * freeBlock.length);
+            const spawnX = Math.floor(Math.random() * freeBlock[spawnY].length);
+            // Берем наше поле
+            const fieldsFree = this.map.find((item) => item.find((el) => freeBlock[spawnY][spawnX].id === el.id));
+            if (!fieldsFree)
+                return;
+            const field = fieldsFree.find((item) => item.id === freeBlock[spawnY][spawnX].id);
+            if (!field)
+                return;
+            // Добавляем поле в локацию
+            this.map = this.map.map((row) => {
+                return row.map((el) => {
+                    if (el.id === field.id) {
+                        return { id: field.id, type: type };
+                    }
+                    else {
+                        return el;
+                    }
+                });
+            });
+        }
+        this.renderMap();
+    }
+    // // ●	Поместить 10 противников с случайные пустые места
+    // spawnNPС() {
+    //     // Ищем пустые места
+    //     const freeBlock = this.map.map((item) =>item.filter((el) => el.type === "free"));
+    //     // Геренирем 10 NPC
+    //     for (let index = 0; index < 10; index++) {
+    //         const spawnY = Math.floor(Math.random() * freeBlock.length);
+    //         const spawnX = Math.floor(Math.random() * freeBlock[spawnY].length);
+    //         // Берем наше поле
+    //         const fieldsFree = this.map.find((item) =>item.find((el) => freeBlock[spawnY][spawnX].id === el.id));
+    //         if (!fieldsFree) return;
+    //         const field = fieldsFree.find((item) => item.id === freeBlock[spawnY][spawnX].id);
+    //         if (!field) return;
+    //         // Добавляем поле в локацию
+    //         this.map = this.map.map((row) => {
+    //             return row.map((el) => {
+    //                 if (el.id === field.id) {
+    //                     return { id: field.id, type: "NPC" };
+    //                 } else {
+    //                     return el;
+    //                 }
+    //             });
+    //         });
+    //     }
+    //     this.renderMap();
+    // }
+    // // ●	Разместить мечи (2 шт) и зелья здоровья (10 шт) в пустых местах
+    // spawnSwordAndHeal() {
+    // }
+    // ●	Сделать возможность передвижения героя клавишами WASD (влево-вверх-вниз-вправо)
     pressButton() {
         addEventListener("keydown", (event) => {
             const isArrow = event.key === "ArrowLeft" ||
@@ -158,6 +215,15 @@ class Game {
                     case "hero":
                         img.src = "images/tile-P.png";
                         break;
+                    case "NPC":
+                        img.src = "images/tile-E.png";
+                        break;
+                    case "sword":
+                        img.src = "images/tile-SW.png";
+                        break;
+                    case "heal":
+                        img.src = "images/tile-HP.png";
+                        break;
                     default:
                         break;
                 }
@@ -171,3 +237,6 @@ game.generateRandomVerticalHorizontalLine();
 game.generateRandomRoom();
 game.pressButton();
 game.spawnHero();
+game.spawnItems("NPC", 10);
+game.spawnItems("sword", 2);
+game.spawnItems("heal", 10);

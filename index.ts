@@ -1,8 +1,10 @@
 const SIZE_MAP = { X: 40, Y: 24 };
 
+type TType = "free" | "wall" | "hero" | "NPC" | "sword" | "heal"
+
 interface IMap {
     id: number;
-    type: "free" | "wall" | "hero";
+    type: TType;
 }
 
 interface IHero {
@@ -21,7 +23,7 @@ class Game {
         this.hero = { x: 0, y: 0 };
     }
 
-    // ● Сгенерировать карту 40x24 и ● Залить всю карту стеной
+    // ●    Сгенерировать карту 40x24 ● Залить всю карту стеной
     init() {
         // Получение элемента с классом field-box
         const field = document.querySelector(".field-box") as HTMLElement;
@@ -70,7 +72,7 @@ class Game {
         this.map = twoDimArray;
     }
 
-    // ● Разместить случайное количество (5 - 10) прямоугольных “комнат” со случайными размерами (3 - 8 клеток в длину и ширину)
+    // ●    Разместить случайное количество (5 - 10) прямоугольных “комнат” со случайными размерами (3 - 8 клеток в длину и ширину)
     generateRandomRoom() {
         // Определяем количество комнат
         const randomCountRoom = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
@@ -118,7 +120,6 @@ class Game {
             const coordinateStartLineX = Math.floor(
                 Math.random() * this.sizeMap.X
             ); // 0 - 40
-            console.log("coordinateStartLineX", coordinateStartLineX);
 
             for (let index = 0; index < this.sizeMap.Y; index++) {
                 // 0 - 24
@@ -130,7 +131,6 @@ class Game {
             const coordinateStartLineY = Math.floor(
                 Math.random() * this.sizeMap.Y
             ); // 0 - 24
-            console.log("coordinateStartLineY", coordinateStartLineY);
 
             for (let index = 0; index < this.sizeMap.X; index++) {
                 // 0 - 40
@@ -141,6 +141,7 @@ class Game {
         this.renderMap();
     }
 
+    // ●	Поместить героя в случайное пустое место
     spawnHero() {
         for (let index = 0; index < this.sizeMap.Y; index++) {
             for (let i = 0; i < this.sizeMap.X; i++) {
@@ -155,6 +156,37 @@ class Game {
         }
     }
 
+    // ●	Поместить 10 противников с случайные пустые места  ●	Разместить мечи (2 шт) и зелья здоровья (10 шт) в пустых местах
+    spawnItems(type: TType, count: number) {
+        // Ищем пустые места
+        const freeBlock = this.map.map((item) => item.filter((el) => el.type === "free"));
+
+        // Геренирем количество элементов
+        for (let index = 0; index < count; index++) {
+            const spawnY = Math.floor(Math.random() * freeBlock.length);
+            const spawnX = Math.floor(Math.random() * freeBlock[spawnY].length);
+
+            // Берем наше поле
+            const fieldsFree = this.map.find((item) =>item.find((el) => freeBlock[spawnY][spawnX].id === el.id));
+            if (!fieldsFree) return;
+            const field = fieldsFree.find((item) => item.id === freeBlock[spawnY][spawnX].id);
+            if (!field) return;
+
+            // Добавляем поле в локацию
+            this.map = this.map.map((row) => {
+                return row.map((el) => {
+                    if (el.id === field.id) {
+                        return { id: field.id, type: type };
+                    } else {
+                        return el;
+                    }
+                });
+            });
+        }
+        this.renderMap();
+    }
+
+    // ●	Сделать возможность передвижения героя клавишами WASD (влево-вверх-вниз-вправо)
     pressButton() {
         addEventListener("keydown", (event) => {
             const isArrow =
@@ -171,19 +203,23 @@ class Game {
             this.map[this.hero.x][this.hero.y].type = "free";
 
             if (key === "ArrowLeft") {
-                if (this.map[this.hero.x][this.hero.y - 1].type === "wall") return;
+                if (this.map[this.hero.x][this.hero.y - 1].type === "wall")
+                    return;
                 this.hero.y = this.hero.y - 1;
             }
             if (key === "ArrowRight") {
-                if (this.map[this.hero.x][this.hero.y + 1].type === "wall") return;
+                if (this.map[this.hero.x][this.hero.y + 1].type === "wall")
+                    return;
                 this.hero.y = this.hero.y + 1;
             }
             if (key === "ArrowUp") {
-                if (this.map[this.hero.x - 1][this.hero.y].type === "wall") return;
+                if (this.map[this.hero.x - 1][this.hero.y].type === "wall")
+                    return;
                 this.hero.x = this.hero.x - 1;
             }
             if (key === "ArrowDown") {
-                if (this.map[this.hero.x + 1][this.hero.y].type === "wall") return;
+                if (this.map[this.hero.x + 1][this.hero.y].type === "wall")
+                    return;
                 this.hero.x = this.hero.x + 1;
             }
 
@@ -211,6 +247,18 @@ class Game {
                         img.src = "images/tile-P.png";
                         break;
 
+                    case "NPC":
+                        img.src = "images/tile-E.png";
+                        break;
+                    
+                    case "sword":
+                        img.src = "images/tile-SW.png";
+                        break;
+                
+                    case "heal":
+                        img.src = "images/tile-HP.png";
+                        break;
+
                     default:
                         break;
                 }
@@ -225,3 +273,7 @@ game.generateRandomVerticalHorizontalLine();
 game.generateRandomRoom();
 game.pressButton();
 game.spawnHero();
+game.spawnItems("NPC", 10);
+game.spawnItems("sword", 2);
+game.spawnItems("heal", 10);
+
