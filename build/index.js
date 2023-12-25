@@ -136,7 +136,7 @@ class Game {
         }
         this.renderMap();
     }
-    // ●	Сделать возможность передвижения героя клавишами WASD (влево-вверх-вниз-вправо)
+    // ●	Сделать возможность передвижения героя клавишами WASD (влево-вверх-вниз-вправо) ●	Сделать возможность атаки клавишей пробел ВСЕХ противников находящихся на соседних клетках
     pressButton() {
         addEventListener("keydown", (event) => {
             const isArrow = event.key === "ArrowLeft" ||
@@ -144,9 +144,12 @@ class Game {
                 event.key === "ArrowUp" ||
                 event.key === "ArrowDown";
             if (isArrow)
-                press(event.key);
+                pressArray(event.key);
+            const isSpace = event.key === " ";
+            if (isSpace)
+                pressSpace(event.key);
         });
-        const press = (key) => {
+        const pressArray = (key) => {
             this.map[this.hero.x][this.hero.y].type = "free";
             const forSounds = (type) => {
                 if (type === 'sword')
@@ -186,6 +189,13 @@ class Game {
             }
             this.map[this.hero.x][this.hero.y].type = "hero";
             this.renderMap();
+        };
+        const pressSpace = (key) => {
+            const isNPC = this.map[this.hero.x + 1][this.hero.y].type === "NPC" || this.map[this.hero.x - 1][this.hero.y].type === "NPC" || this.map[this.hero.x][this.hero.y + 1].type === "NPC" || this.map[this.hero.x][this.hero.y - 1].type === "NPC";
+            if (isNPC)
+                this.playSound('sounds/hit.mp3');
+            else
+                this.playSound('sounds/not-hit.mp3');
         };
     }
     playSound(url) {
