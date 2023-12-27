@@ -4,7 +4,7 @@ class Game {
     constructor(sizeMap) {
         this.sizeMap = sizeMap;
         this.map = [];
-        this.hero = { x: 0, y: 0 };
+        this.hero = { x: 0, y: 0, strength: 0 };
     }
     // ●    Сгенерировать карту 40x24 ● Залить всю карту стеной
     init() {
@@ -99,7 +99,7 @@ class Game {
             for (let i = 0; i < this.sizeMap.X; i++) {
                 const block = this.map[i][index];
                 if (block.type === "free") {
-                    this.hero = { x: i, y: index };
+                    this.hero = { x: i, y: index, strength: 25 };
                     const img = document.getElementById(`${block.id}`);
                     block.type = "hero";
                     return (img.src = "images/tile-P.png");
@@ -126,7 +126,11 @@ class Game {
             this.map = this.map.map((row) => {
                 return row.map((el) => {
                     if (el.id === field.id) {
-                        return { id: field.id, type: type };
+                        // Добавляем NPC 100 hp
+                        if (type === "NPC")
+                            return { id: field.id, type: type, hp: 100 };
+                        else
+                            return { id: field.id, type: type };
                     }
                     else {
                         return el;
@@ -147,17 +151,17 @@ class Game {
                 pressArray(event.key);
             const isSpace = event.key === " ";
             if (isSpace)
-                pressSpace(event.key);
+                pressSpace();
         });
         const pressArray = (key) => {
             this.map[this.hero.x][this.hero.y].type = "free";
             const forSounds = (type) => {
-                if (type === 'sword')
-                    this.playSound('sounds/sword.mp3');
-                if (type === 'heal')
-                    this.playSound('sounds/heal.mp3');
+                if (type === "sword")
+                    this.playSound("sounds/sword.mp3");
+                if (type === "heal")
+                    this.playSound("sounds/heal.mp3");
                 if (type === "free")
-                    this.playSound('sounds/step.mp3');
+                    this.playSound("sounds/step.mp3");
             };
             if (key === "ArrowLeft") {
                 const type = this.map[this.hero.x][this.hero.y - 1].type;
@@ -190,13 +194,53 @@ class Game {
             this.map[this.hero.x][this.hero.y].type = "hero";
             this.renderMap();
         };
-        const pressSpace = (key) => {
-            const isNPC = this.map[this.hero.x + 1][this.hero.y].type === "NPC" || this.map[this.hero.x - 1][this.hero.y].type === "NPC" || this.map[this.hero.x][this.hero.y + 1].type === "NPC" || this.map[this.hero.x][this.hero.y - 1].type === "NPC";
-            if (isNPC)
-                this.playSound('sounds/hit.mp3');
+        const pressSpace = () => {
+            const coord = {
+                xt: this.map[this.hero.x + 1][this.hero.y],
+                xb: this.map[this.hero.x - 1][this.hero.y],
+                yt: this.map[this.hero.x][this.hero.y + 1],
+                yb: this.map[this.hero.x][this.hero.y - 1],
+            };
+            const isNPC = coord.xt.type === "NPC" ||
+                coord.xb.type === "NPC" ||
+                coord.yt.type === "NPC" ||
+                coord.yb.type === "NPC";
+            if (!isNPC) {
+                this.playSound("sounds/not-hit.mp3");
+                return;
+            }
+            if (coord.xt.type === "NPC")
+                this.map[this.hero.x + 1][this.hero.y].hp =
+                    coord.xt.hp - this.hero.strength;
+            if (coord.xb.type === "NPC")
+                this.map[this.hero.x - 1][this.hero.y].hp =
+                    coord.xb.hp - this.hero.strength;
+            if (coord.yt.type === "NPC")
+                this.map[this.hero.x][this.hero.y + 1].hp =
+                    coord.yt.hp - this.hero.strength;
+            if (coord.yb.type === "NPC")
+                this.map[this.hero.x][this.hero.y - 1].hp =
+                    coord.yb.hp - this.hero.strength;
+            const isDeath = this.map[this.hero.x + 1][this.hero.y].hp === 0 ||
+                this.map[this.hero.x - 1][this.hero.y].hp === 0 ||
+                this.map[this.hero.x][this.hero.y + 1].hp === 0 ||
+                this.map[this.hero.x][this.hero.y - 1].hp === 0;
+            if (isDeath)
+                this.playSound("sounds/death.mp3");
             else
-                this.playSound('sounds/not-hit.mp3');
+                this.playSound("sounds/hit.mp3");
+            this.renderMap();
         };
+    }
+    findMapId(id) {
+        return this.map
+            .map((row) => {
+            return row.filter((el) => {
+                if (el.id === id)
+                    return el;
+            });
+        })
+            .filter((item) => item.length !== 0)[0][0];
     }
     playSound(url) {
         const audio = new Audio();
@@ -205,21 +249,42 @@ class Game {
     }
     renderMap() {
         // Если type элемента поменялось, мы делаем перерендер
-        this.map.forEach((element) => {
-            element.forEach((item) => {
+        this.map.forEach((element, index) => {
+            element.forEach((item, i) => {
                 const img = document.getElementById(`${item.id}`);
                 switch (item.type) {
                     case "free":
+                        const divFree = img.parentElement;
+                        divFree.classList = "field__img";
                         img.src = "images/tile-.png";
                         break;
                     case "wall":
                         img.src = "images/tile-W.png";
                         break;
                     case "hero":
+                        const divHero = img.parentElement;
+                        divHero.classList.add("hero");
                         img.src = "images/tile-P.png";
                         break;
                     case "NPC":
-                        img.src = "images/tile-E.png";
+                        const divNPC = img.parentElement;
+                        divNPC.classList.add("NPC");
+                        divNPC.style.width = `${item.hp}%`;
+                        if (item.hp === 0) {
+                            img.src = "images/tile-.png";
+                            divNPC.classList = "field__img";
+                            divNPC.style.width = '100%';
+                            // item = {id: item.id, type: "free"}
+                            // item.type = 'free'
+                            // console.log(this.findMapId(item.id));
+                            this.map[index][i] = { id: item.id, type: "free" };
+                            console.log(item.id);
+                            console.log(index, i);
+                            console.log(this.map);
+                            this.renderMap();
+                        }
+                        else
+                            img.src = "images/tile-E.png";
                         break;
                     case "sword":
                         img.src = "images/tile-SW.png";

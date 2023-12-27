@@ -87,3 +87,19 @@ h1 {
     clear: both;
     display: block;
 }
+.NPC::before{
+    content: "";
+    display: flex;
+    color: red;
+    background: red;
+    height: 2px;
+    z-index: 999;
+}
+.hero::before{
+    content: "";
+    display: flex;
+    color: greenyellow;
+    background: greenyellow;
+    height: 2px;
+    z-index: 999;
+}

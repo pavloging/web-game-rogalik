@@ -1,15 +1,18 @@
 const SIZE_MAP = { X: 40, Y: 24 };
 
-type TType = "free" | "wall" | "hero" | "NPC" | "sword" | "heal"
+type TType = "free" | "wall" | "hero" | "NPC" | "sword" | "heal";
 
 interface IMap {
     id: number;
     type: TType;
+
+    hp?: number;
 }
 
 interface IHero {
     x: number;
     y: number;
+    strength: number;
 }
 
 class Game {
@@ -20,7 +23,7 @@ class Game {
     constructor(sizeMap: { X: number; Y: number }) {
         this.sizeMap = sizeMap;
         this.map = [];
-        this.hero = { x: 0, y: 0 };
+        this.hero = { x: 0, y: 0, strength: 0 };
     }
 
     // ●    Сгенерировать карту 40x24 ● Залить всю карту стеной
@@ -147,7 +150,7 @@ class Game {
             for (let i = 0; i < this.sizeMap.X; i++) {
                 const block = this.map[i][index];
                 if (block.type === "free") {
-                    this.hero = { x: i, y: index };
+                    this.hero = { x: i, y: index, strength: 25 };
                     const img: any = document.getElementById(`${block.id}`);
                     block.type = "hero";
                     return (img.src = "images/tile-P.png");
@@ -159,7 +162,9 @@ class Game {
     // ●	Поместить 10 противников с случайные пустые места  ●	Разместить мечи (2 шт) и зелья здоровья (10 шт) в пустых местах
     spawnItems(type: TType, count: number) {
         // Ищем пустые места
-        const freeBlock = this.map.map((item) => item.filter((el) => el.type === "free"));
+        const freeBlock = this.map.map((item) =>
+            item.filter((el) => el.type === "free")
+        );
 
         // Геренирем количество элементов
         for (let index = 0; index < count; index++) {
@@ -167,16 +172,23 @@ class Game {
             const spawnX = Math.floor(Math.random() * freeBlock[spawnY].length);
 
             // Берем наше поле
-            const fieldsFree = this.map.find((item) =>item.find((el) => freeBlock[spawnY][spawnX].id === el.id));
+            const fieldsFree = this.map.find((item) =>
+                item.find((el) => freeBlock[spawnY][spawnX].id === el.id)
+            );
             if (!fieldsFree) return;
-            const field = fieldsFree.find((item) => item.id === freeBlock[spawnY][spawnX].id);
+            const field = fieldsFree.find(
+                (item) => item.id === freeBlock[spawnY][spawnX].id
+            );
             if (!field) return;
 
             // Добавляем поле в локацию
             this.map = this.map.map((row) => {
                 return row.map((el) => {
                     if (el.id === field.id) {
-                        return { id: field.id, type: type };
+                        // Добавляем NPC 100 hp
+                        if (type === "NPC")
+                            return { id: field.id, type: type, hp: 100 };
+                        else return { id: field.id, type: type };
                     } else {
                         return el;
                     }
@@ -187,7 +199,6 @@ class Game {
     }
 
     // ●	Сделать возможность передвижения героя клавишами WASD (влево-вверх-вниз-вправо) ●	Сделать возможность атаки клавишей пробел ВСЕХ противников находящихся на соседних клетках
-
     pressButton() {
         addEventListener("keydown", (event) => {
             const isArrow =
@@ -197,8 +208,8 @@ class Game {
                 event.key === "ArrowDown";
             if (isArrow) pressArray(event.key);
 
-            const isSpace = event.key === " "
-            if (isSpace) pressSpace(event.key)
+            const isSpace = event.key === " ";
+            if (isSpace) pressSpace();
         });
 
         const pressArray = (
@@ -207,33 +218,33 @@ class Game {
             this.map[this.hero.x][this.hero.y].type = "free";
 
             const forSounds = (type: TType) => {
-                if (type === 'sword') this.playSound('sounds/sword.mp3')
-                if (type === 'heal') this.playSound('sounds/heal.mp3')
-                if (type === "free") this.playSound('sounds/step.mp3')
-            }
+                if (type === "sword") this.playSound("sounds/sword.mp3");
+                if (type === "heal") this.playSound("sounds/heal.mp3");
+                if (type === "free") this.playSound("sounds/step.mp3");
+            };
 
             if (key === "ArrowLeft") {
-                const type = this.map[this.hero.x][this.hero.y - 1].type
+                const type = this.map[this.hero.x][this.hero.y - 1].type;
                 if (type === "wall" || type === "NPC") return;
-                forSounds(type)
+                forSounds(type);
                 this.hero.y = this.hero.y - 1;
             }
             if (key === "ArrowRight") {
-                const type = this.map[this.hero.x][this.hero.y + 1].type
+                const type = this.map[this.hero.x][this.hero.y + 1].type;
                 if (type === "wall" || type === "NPC") return;
-                forSounds(type)
+                forSounds(type);
                 this.hero.y = this.hero.y + 1;
             }
             if (key === "ArrowUp") {
-                const type = this.map[this.hero.x - 1][this.hero.y].type 
+                const type = this.map[this.hero.x - 1][this.hero.y].type;
                 if (type === "wall" || type === "NPC") return;
-                forSounds(type)
+                forSounds(type);
                 this.hero.x = this.hero.x - 1;
             }
             if (key === "ArrowDown") {
-                const type = this.map[this.hero.x + 1][this.hero.y].type
+                const type = this.map[this.hero.x + 1][this.hero.y].type;
                 if (type === "wall" || type === "NPC") return;
-                forSounds(type)
+                forSounds(type);
                 this.hero.x = this.hero.x + 1;
             }
 
@@ -241,12 +252,57 @@ class Game {
             this.renderMap();
         };
 
-        const pressSpace = (key: " ") => {
-            const isNPC = this.map[this.hero.x + 1][this.hero.y].type === "NPC" || this.map[this.hero.x - 1][this.hero.y].type === "NPC" || this.map[this.hero.x][this.hero.y + 1].type === "NPC" || this.map[this.hero.x][this.hero.y - 1].type === "NPC";
+        const pressSpace = () => {
+            const coord = {
+                xt: this.map[this.hero.x + 1][this.hero.y],
+                xb: this.map[this.hero.x - 1][this.hero.y],
+                yt: this.map[this.hero.x][this.hero.y + 1],
+                yb: this.map[this.hero.x][this.hero.y - 1],
+            };
+            const isNPC =
+                coord.xt.type === "NPC" ||
+                coord.xb.type === "NPC" ||
+                coord.yt.type === "NPC" ||
+                coord.yb.type === "NPC";
 
-            if (isNPC) this.playSound('sounds/hit.mp3')
-            else this.playSound('sounds/not-hit.mp3')
-        }
+            if (!isNPC) {
+                this.playSound("sounds/not-hit.mp3");
+                return;
+            }
+
+            if (coord.xt.type === "NPC")
+                this.map[this.hero.x + 1][this.hero.y].hp =
+                    coord.xt.hp! - this.hero.strength;
+            if (coord.xb.type === "NPC")
+                this.map[this.hero.x - 1][this.hero.y].hp =
+                    coord.xb.hp! - this.hero.strength;
+            if (coord.yt.type === "NPC")
+                this.map[this.hero.x][this.hero.y + 1].hp =
+                    coord.yt.hp! - this.hero.strength;
+            if (coord.yb.type === "NPC")
+                this.map[this.hero.x][this.hero.y - 1].hp =
+                    coord.yb.hp! - this.hero.strength;
+
+            const isDeath =
+                this.map[this.hero.x + 1][this.hero.y].hp === 0 ||
+                this.map[this.hero.x - 1][this.hero.y].hp === 0 ||
+                this.map[this.hero.x][this.hero.y + 1].hp === 0 ||
+                this.map[this.hero.x][this.hero.y - 1].hp === 0;
+            if (isDeath) this.playSound("sounds/death.mp3");
+            else this.playSound("sounds/hit.mp3");
+
+            this.renderMap();
+        };
+    }
+
+    findMapId(id: number) {
+        return this.map
+            .map((row) => {
+                return row.filter((el) => {
+                    if (el.id === id) return el;
+                });
+            })
+            .filter((item) => item.length !== 0)[0][0];
     }
 
     playSound(url: string) {
@@ -257,12 +313,14 @@ class Game {
 
     renderMap() {
         // Если type элемента поменялось, мы делаем перерендер
-        this.map.forEach((element) => {
-            element.forEach((item: IMap) => {
+        this.map.forEach((element, index) => {
+            element.forEach((item: IMap, i) => {
                 const img: any = document.getElementById(`${item.id}`);
 
                 switch (item.type) {
                     case "free":
+                        const divFree = img.parentElement;
+                        divFree.classList = "field__img";
                         img.src = "images/tile-.png";
                         break;
 
@@ -271,17 +329,29 @@ class Game {
                         break;
 
                     case "hero":
+                        const divHero = img.parentElement;
+                        divHero.classList.add("hero");
                         img.src = "images/tile-P.png";
                         break;
 
                     case "NPC":
-                        img.src = "images/tile-E.png";
+                        const divNPC = img.parentElement;
+                        divNPC.classList.add("NPC");
+                        divNPC.style.width = `${item.hp}%`;
+                        if (item.hp === 0) {
+                            img.src = "images/tile-.png";
+                            divNPC.classList = "field__img";
+                            divNPC.style.width = '100%'
+
+                            this.map[index][i] = { id: item.id, type: "free" }
+                            this.renderMap()
+                        } else img.src = "images/tile-E.png";
                         break;
-                    
+
                     case "sword":
                         img.src = "images/tile-SW.png";
                         break;
-                
+
                     case "heal":
                         img.src = "images/tile-HP.png";
                         break;
@@ -303,4 +373,3 @@ game.spawnHero();
 game.spawnItems("NPC", 10);
 game.spawnItems("sword", 2);
 game.spawnItems("heal", 10);
-
