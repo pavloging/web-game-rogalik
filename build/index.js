@@ -274,13 +274,7 @@ class Game {
                             img.src = "images/tile-.png";
                             divNPC.classList = "field__img";
                             divNPC.style.width = '100%';
-                            // item = {id: item.id, type: "free"}
-                            // item.type = 'free'
-                            // console.log(this.findMapId(item.id));
                             this.map[index][i] = { id: item.id, type: "free" };
-                            console.log(item.id);
-                            console.log(index, i);
-                            console.log(this.map);
                             this.renderMap();
                         }
                         else
