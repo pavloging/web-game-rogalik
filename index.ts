@@ -6,12 +6,15 @@ interface IMap {
     id: number;
     type: TType;
 
+    x?: number;
+    y?: number; 
     hp?: number;
 }
 
 interface IHero {
     x: number;
     y: number;
+    hp: number;
     strength: number;
 }
 
@@ -23,7 +26,7 @@ class Game {
     constructor(sizeMap: { X: number; Y: number }) {
         this.sizeMap = sizeMap;
         this.map = [];
-        this.hero = { x: 0, y: 0, strength: 0 };
+        this.hero = { x: 0, y: 0, hp: 0, strength: 0 };
     }
 
     // ●    Сгенерировать карту 40x24 ● Залить всю карту стеной
@@ -135,7 +138,7 @@ class Game {
             for (let i = 0; i < this.sizeMap.Y; i++) {
                 const block = this.map[index][i];
                 if (block.type === "free") {
-                    this.hero = { x: index, y: i, strength: 25 };
+                    this.hero = { x: index, y: i, hp: 100, strength: 25 };
                     const img: any = document.getElementById(`${block.id}`);
                     block.type = "hero";
                     return (img.src = "images/tile-P.png");
@@ -167,12 +170,12 @@ class Game {
             if (!field) return;
 
             // Добавляем поле в локацию
-            this.map = this.map.map((row) => {
-                return row.map((el) => {
+            this.map = this.map.map((row, i) => {
+                return row.map((el, index) => {
                     if (el.id === field.id) {
                         // Добавляем NPC 100 hp
                         if (type === "NPC")
-                            return { id: field.id, type: type, hp: 100 };
+                            return { id: field.id, x: i, y: index, type: type, hp: 100 };
                         else return { id: field.id, type: type };
                     } else {
                         return el;
@@ -209,24 +212,32 @@ class Game {
             if (key === "ArrowLeft") {
                 const type = this.map[this.hero.x - 1][this.hero.y].type;
                 if (type === "wall" || type === "NPC") return;
+                if (type === 'heal' && this.hero.hp < 100) this.hero.hp = this.hero.hp + 25
+                if (type === "sword") this.hero.strength = this.hero.strength + 25
                 forSounds(type);
                 this.hero.x = this.hero.x - 1;
             }
             if (key === "ArrowRight") {
                 const type = this.map[this.hero.x + 1][this.hero.y].type;
                 if (type === "wall" || type === "NPC") return;
+                if (type === 'heal' && this.hero.hp < 100) this.hero.hp = this.hero.hp + 25
+                if (type === "sword") this.hero.strength = this.hero.strength + 25
                 forSounds(type);
                 this.hero.x = this.hero.x + 1;
             }
             if (key === "ArrowUp") {
                 const type = this.map[this.hero.x][this.hero.y + 1].type;
                 if (type === "wall" || type === "NPC") return;
+                if (type === 'heal' && this.hero.hp < 100) this.hero.hp = this.hero.hp + 25
+                if (type === "sword") this.hero.strength = this.hero.strength + 25
                 forSounds(type);
                 this.hero.y = this.hero.y + 1;
             }
             if (key === "ArrowDown") {
                 const type = this.map[this.hero.x][this.hero.y - 1].type;
                 if (type === "wall" || type === "NPC") return;
+                if (type === 'heal' && this.hero.hp < 100) this.hero.hp = this.hero.hp + 25
+                if (type === "sword") this.hero.strength = this.hero.strength + 25
                 forSounds(type);
                 this.hero.y = this.hero.y - 1;
             }
@@ -254,17 +265,13 @@ class Game {
             }
 
             if (coord.xt.type === "NPC")
-                this.map[this.hero.x + 1][this.hero.y].hp =
-                    coord.xt.hp! - this.hero.strength;
+                this.map[this.hero.x + 1][this.hero.y].hp = coord.xt.hp! - this.hero.strength;
             if (coord.xb.type === "NPC")
-                this.map[this.hero.x - 1][this.hero.y].hp =
-                    coord.xb.hp! - this.hero.strength;
+                this.map[this.hero.x - 1][this.hero.y].hp = coord.xb.hp! - this.hero.strength;
             if (coord.yt.type === "NPC")
-                this.map[this.hero.x][this.hero.y + 1].hp =
-                    coord.yt.hp! - this.hero.strength;
+                this.map[this.hero.x][this.hero.y + 1].hp = coord.yt.hp! - this.hero.strength;
             if (coord.yb.type === "NPC")
-                this.map[this.hero.x][this.hero.y - 1].hp =
-                    coord.yb.hp! - this.hero.strength;
+                this.map[this.hero.x][this.hero.y - 1].hp = coord.yb.hp! - this.hero.strength;
 
             const isDeath =
                 this.map[this.hero.x + 1][this.hero.y].hp === 0 ||
@@ -276,6 +283,82 @@ class Game {
 
             this.renderMap();
         };
+    }
+    // ●	Сделать случайное передвижение противников (на выбор, либо передвижение по одной случайной оси, либо случайное направление каждый ход, либо поиск и атака героя) ●	Сделать атаку героя противником, если герой находится на соседней клетке с противником
+    autoMoveNPC(time: number) {
+        // 1. Находим NPC
+        // 2. Определяем свободные поля
+        // 3. Рандомно выбираем поле и идем туда
+
+        setInterval(() => {
+            const NPC = []
+
+            for (let i = 0; i < this.sizeMap.X; i++) {
+                for (let index = 0; index < this.sizeMap.Y; index++) {
+                    if (this.map[i][index].type === "NPC") NPC.push(this.map[i][index])
+                }
+            }
+    
+            for (let i = 0; i < NPC.length; i++) {
+                const item = NPC[i];
+                const freeBlock: Array<string> = []
+
+                if(!item.x || !item.y) continue 
+
+                const right = this.map[item.x + 1]?.[item.y]
+                const left = this.map[item.x - 1]?.[item.y]
+                const top = this.map[item.x]?.[item.y + 1]
+                const bottom = this.map[item.x]?.[item.y - 1]
+
+                if (right?.type === 'free') freeBlock.push('right')
+                if (left?.type === 'free') freeBlock.push('left')
+                if (top?.type === 'free') freeBlock.push('top')
+                if (bottom?.type === 'free') freeBlock.push('bottom')
+
+                const randomBlock = Math.floor(Math.random() * freeBlock.length);
+
+                // Атака героя противниками
+                const attackNPC = (item: IMap) => {
+                    if(!item.x || !item.y) return 
+
+                    const rightHero = this.map[item.x + 1]?.[item.y]
+                    const leftHero = this.map[item.x - 1]?.[item.y]
+                    const topHero = this.map[item.x]?.[item.y + 1]
+                    const bottomHero = this.map[item.x]?.[item.y - 1]
+
+                    if(rightHero?.type === "hero" || leftHero?.type === "hero" || topHero?.type === "hero" || bottomHero?.type === "hero") {
+                        this.hero.hp = this.hero.hp - 25
+                        this.playSound("sounds/hit-hero.mp3")
+                    }
+                }
+
+                const side = freeBlock[randomBlock]
+                if (side === 'right'){
+                    this.map[item.x][item.y] = {...this.map[item.x + 1][item.y], id: this.map[item.x][item.y].id}
+                    this.map[item.x + 1][item.y] = {...item, id: this.map[item.x + 1][item.y].id, x: item.x + 1}
+                    attackNPC(this.map[item.x + 1][item.y])
+                } 
+                else if (side === 'left'){
+                    this.map[item.x][item.y] = {...this.map[item.x - 1][item.y], id: this.map[item.x][item.y].id}
+                    this.map[item.x - 1][item.y] = {...item, id: this.map[item.x - 1][item.y].id, x: item.x - 1}
+                    attackNPC(this.map[item.x - 1][item.y])
+                }
+                else if (side === 'top'){
+                    this.map[item.x][item.y] = {...this.map[item.x][item.y + 1], id: this.map[item.x][item.y].id}
+                    this.map[item.x][item.y + 1] = {...item, id: this.map[item.x][item.y + 1].id, y: item.y + 1}
+                    attackNPC(this.map[item.x][item.y + 1])
+                }
+                else if (side === 'bottom'){
+                    this.map[item.x][item.y] = {...this.map[item.x][item.y - 1], id: this.map[item.x][item.y].id}
+                    this.map[item.x][item.y - 1] = {...item, id: this.map[item.x][item.y - 1].id, y: item.y - 1}
+                    attackNPC(this.map[item.x][item.y - 1])
+                }
+                
+                if (side.length !== 0) this.playSound("sounds/step-npc.mp3")
+            }
+    
+            this.renderMap()
+        }, time)
     }
 
     findMapId(id: number) {
@@ -312,19 +395,26 @@ class Game {
                         break;
 
                     case "hero":
+                        const fieldHero = document.querySelector('.field') as HTMLElement
                         const divHero = img.parentElement;
                         divHero.classList.add("hero");
-                        img.src = "images/tile-P.png";
+                        divHero.style.width = `${fieldHero.offsetWidth*this.hero.hp!/100}px`;
+                        if (this.hero.hp === 0) {
+                            console.log('ENG GAME')
+                            window.location.reload()
+                        } else img.src = "images/tile-P.png";
+                        
                         break;
 
                     case "NPC":
+                        const fieldNPC = document.querySelector('.field') as HTMLElement
                         const divNPC = img.parentElement;
                         divNPC.classList.add("NPC");
-                        divNPC.style.width = `${item.hp}%`;
-                        if (item.hp === 0) {
+                        divNPC.style.width = `${fieldNPC.offsetWidth*item.hp!/100}px`;
+                        if (item.hp! <= 0) {
                             img.src = "images/tile-.png";
                             divNPC.classList = "field__img";
-                            divNPC.style.width = '100%'
+                            divNPC.style.width = `${fieldNPC.offsetWidth}px`
 
                             this.map[index][i] = { id: item.id, type: "free" }
                             this.renderMap()
@@ -352,10 +442,11 @@ class Game {
         game.generateRandomVerticalHorizontalLine();
         game.generateRandomRoom();
         game.spawnHero();
-        game.pressButton();
         game.spawnItems("NPC", 10);
         game.spawnItems("sword", 2);
         game.spawnItems("heal", 10);
+        game.pressButton();
+        game.autoMoveNPC(2000)
     }
 }
 

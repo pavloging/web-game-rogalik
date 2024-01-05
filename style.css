@@ -28,6 +28,7 @@ h1 {
     height: 640px;
     border: 2px solid #d0d0d0;
     float: left;
+    z-index: 999;
 }
 .field {
     background-color: red;
@@ -94,13 +95,15 @@ h1 {
     color: red;
     background: red;
     height: 2px;
-    z-index: 999;
+    z-index: 99;
 }
 .hero::before{
     content: "";
+    position: absolute;
     display: flex;
     color: greenyellow;
     background: greenyellow;
     height: 2px;
-    z-index: 999;
+    width: inherit;
+    z-index: 99;
 }
